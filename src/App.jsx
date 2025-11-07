@@ -1,122 +1,95 @@
-"use client";
-import { useRef } from "react";
-import {
-  motion,
-  AnimatePresence,
-  useScroll,
-  useTransform,
-  useMotionValue,
-  useMotionTemplate,
-} from "framer-motion";
+import React, { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-export default function FramerMotionShowcase() {
-  // --- useRef for scroll container (viewport example)
-  const scrollRef = useRef(null);
+gsap.registerPlugin(ScrollTrigger);
 
-  // --- useScroll + useTransform (scroll based animation)
-  const { scrollYProgress } = useScroll();
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 2]);
-  const rotate = useTransform(scrollYProgress, [0, 1], [0, 360]);
-  const background = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["#0f172a", "#1e1b4b"],
-  );
+const App = () => {
+  const box1 = useRef(null);
+  const box2 = useRef(null);
+  const box3 = useRef(null);
+  const section3 = useRef(null);
 
-  // --- useMotionValue + useMotionTemplate
-  const x = useMotionValue(0);
-  const gradient = useMotionTemplate`linear-gradient(90deg, #8b5cf6 ${x}px, #ec4899)`;
+  useEffect(() => {
+    // Clean old triggers before creating new ones (for hot reloads)
+    ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
 
-  // --- Variants for reusable animations
-  const boxVariants = {
-    hidden: { opacity: 0, scale: 0.5 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: { type: "spring", stiffness: 120 },
-    },
-    exit: { opacity: 0, scale: 0.2 },
-  };
+    // Box 1 animation
+    gsap.to(box1.current, {
+      scrollTrigger: {
+        trigger: box1.current,
+        start: "top center",
+        end: "bottom top",
+        scrub: true,
+        markers: true, // 👈 debug markers
+      },
+      rotation: 360,
+      scale: 0.3,
+      opacity: 0.3,
+    });
+
+    // Box 2 animation
+    gsap.from(box2.current, {
+      scrollTrigger: {
+        trigger: box2.current,
+        start: "top 80%",
+        end: "top 40%",
+        scrub: true,
+        markers: true,
+      },
+      x: -300,
+      opacity: 0,
+      scale: 0.8,
+    });
+
+    // Section 3 animation
+    gsap.to(box3.current, {
+      scrollTrigger: {
+        trigger: section3.current,
+        start: "top top",
+        end: "+=100%",
+        scrub: true,
+        pin: true,
+        markers: true,
+      },
+      scale: 5,
+      rotation: 720,
+      opacity: 0.5,
+    });
+
+    ScrollTrigger.refresh();
+  }, []);
 
   return (
-    <motion.div
-      ref={scrollRef}
-      style={{ background }}
-      className="flex h-[350vh] w-full flex-col items-center overflow-y-scroll text-white"
-    >
-      {/* Section 1 - initial / animate / transition */}
-      <motion.div
-        className="sticky top-20 mt-20 rounded-2xl bg-purple-600 p-6"
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      >
-        <h2 className="text-xl font-semibold">
-          🎬 initial / animate / transition
-        </h2>
-      </motion.div>
+    <div className="overflow-x-hidden">
+      {/* Section 1 */}
+      <section className="flex h-[120vh] items-center justify-center bg-gradient-to-r from-slate-800 to-slate-600">
+        <div
+          ref={box1}
+          className="h-32 w-32 rounded-xl bg-amber-400 shadow-xl"
+        ></div>
+      </section>
 
-      {/* Section 2 - whileHover / whileTap */}
-      <motion.button
-        className="mt-20 rounded-xl bg-pink-600 px-6 py-3"
-        whileHover={{ scale: 1.2, rotate: 5 }}
-        whileTap={{ scale: 0.9, rotate: -5 }}
-        transition={{ type: "spring", stiffness: 200 }}
-      >
-        🖱️ Hover / Tap Me
-      </motion.button>
+      {/* Section 2 */}
+      <section className="flex h-[120vh] items-center justify-center bg-gradient-to-r from-rose-600 to-red-400">
+        <div
+          ref={box2}
+          className="h-32 w-32 rounded-xl bg-gray-100 shadow-2xl"
+        ></div>
+      </section>
 
-      {/* Section 3 - drag */}
-      <motion.div
-        className="mt-20 h-40 w-40 cursor-grab rounded-xl bg-indigo-500"
-        drag
-        dragConstraints={{ left: -100, right: 100, top: -50, bottom: 50 }}
-        whileDrag={{ scale: 1.1 }}
+      {/* Section 3 */}
+      <section
+        ref={section3}
+        className="flex h-[120vh] items-center justify-center bg-gradient-to-r from-green-600 to-emerald-400"
       >
-        <p className="mt-16 text-center">Drag Me</p>
-      </motion.div>
-
-      {/* Section 4 - whileInView */}
-      <motion.div
-        className="mt-40 rounded-xl bg-emerald-600 p-10"
-        initial={{ opacity: 0, y: 100 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.5, root: scrollRef }}
-        transition={{ duration: 0.7 }}
-      >
-        👀 whileInView + viewport
-      </motion.div>
-
-      {/* Section 5 - useScroll + useTransform */}
-      <motion.div
-        style={{ scale, rotate }}
-        className="mt-40 flex h-40 w-40 items-center justify-center rounded-full bg-blue-500"
-      >
-        Scroll Anim
-      </motion.div>
-
-      {/* Section 6 - useMotionValue + useMotionTemplate */}
-      <motion.div
-        style={{ background: gradient }}
-        className="mt-40 flex h-20 w-60 items-center justify-center rounded-lg text-center"
-        drag="x"
-        style={{ x, background: gradient }}
-      >
-        🎨 useMotionTemplate
-      </motion.div>
-
-      {/* Section 7 - Variants + AnimatePresence */}
-      <AnimatePresence>
-        <motion.div
-          className="mt-40 rounded-lg bg-yellow-500 p-8 font-bold text-black"
-          variants={boxVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-        >
-          🎭 Variants + AnimatePresence
-        </motion.div>
-      </AnimatePresence>
-    </motion.div>
+        <div
+          ref={box3}
+          className="h-32 w-32 rounded-xl bg-black shadow-2xl"
+        ></div>
+      </section>
+    </div>
   );
-}
+};
+
+export default App;
